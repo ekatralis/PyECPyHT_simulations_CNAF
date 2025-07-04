@@ -6,7 +6,6 @@ JUMP_HOST="bastion.cnaf.infn.it"
 DEST_HOST="ui-hpc2.cr.cnaf.infn.it"
 # ------------------------
 
-# --- INPUT VALIDATION ---
 if  [ "$#" -eq 1 ]; then
     LOCAL_PATH="$1"
     rsync -avz -e "ssh -J ${USERNAME}@${JUMP_HOST}" "$LOCAL_PATH" "${USERNAME}@${DEST_HOST}:/home/HPC/${USERNAME}/"

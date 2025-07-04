@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# --- CONFIGURE THESE ---
+USERNAME="username"
+JUMP_HOST="bastion.cnaf.infn.it"
+DEST_HOST="ui-hpc2.cr.cnaf.infn.it"
+# ------------------------
+
+if  [ "$#" -eq 1 ]; then
+    REMOTE_SUBDIR="$1"
+    REMOTE_PATH="/home/HPC/${USERNAME}/${REMOTE_SUBDIR}"
+    rsync -avz -e "ssh -J ${USERNAME}@${JUMP_HOST}" "${USERNAME}@${DEST_HOST}:${REMOTE_PATH}" "./"
+elif [ "$#" -eq 2 ]; then
+    REMOTE_SUBDIR="$1"
+    REMOTE_PATH="/home/HPC/${USERNAME}/${REMOTE_SUBDIR}"
+    LOCAL_PATH="$2"
+    mkdir -p "$LOCAL_PATH"
+    rsync -avz \
+        -e "ssh -J ${USERNAME}@${JUMP_HOST}" \
+        "${USERNAME}@${DEST_HOST}:${REMOTE_PATH}" \
+        "$LOCAL_PATH"
+else
+    echo "Usage: copy_to_cnaf /folder_or_file/inside/cnaf/home /local/path or copy_to_cnaf /folder_or_file/inside/cnaf/home to copy into cwd"
+    exit 1
+fi
