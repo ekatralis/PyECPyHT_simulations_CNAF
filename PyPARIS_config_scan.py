@@ -13,6 +13,7 @@ parser.add_argument("--job_prefix", help = "Prefix for job", type = str, default
 parser.add_argument("--fail_email", type = str, help = "Email to send notice in case of failuer", required = True)
 parser.add_argument("--conda_env", type = str, help = "Path to conda environment", required = True)
 parser.add_argument("--queue_name", type = str, help = "Name of the queue to submit the jobs to", required = True)
+parser.add_argument("--use_conda_run", action="store_true", help="Use conda run command in launch file as opposed to activating environment")
 args = parser.parse_args()
 
 ref_sim = os.path.abspath(args.ref_sim)
@@ -23,6 +24,7 @@ fail_email = args.fail_email
 n_cores = args.n_cores
 conda_env_path = args.conda_env
 queue_name = args.queue_name
+use_conda_run = args.use_conda_run
 sim_submit_file = os.path.join(output_dir, "launch_sims.sh")
 # Scan electron density
 el_densities = np.concatenate([np.array([1e10,1e11,5e11]),np.arange(1e12, 1e13,1e12),np.arange(1e13, 5e13,1e13)],axis = 0)
@@ -48,12 +50,21 @@ for el_dens in el_densities:
 # """
 
     module_import = ""
+    conda_run_cmd = ""
+    activate_env = ""
+    if not use_conda_run:
+        activate_env = f"""
+eval "$(conda shell.bash hook)"
+conda activate {conda_env_path}
+"""
+    else:
+        conda_run_cmd = f"conda run -p {conda_env_path}"
     if args.multithreading_mode == "MPI":
         module_import = "module load mpi/openmpi-x86_64"
-        launch_cmd = f"mpiexec -n {n_cores} conda run -p {conda_env_path} python -m PyPARIS.withmpi sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
+        launch_cmd = f"mpiexec -n {n_cores} {conda_run_cmd} python -m PyPARIS.withmpi sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
     elif args.multithreading_mode == "Multiproc":
         module_import = ""
-        launch_cmd = f"conda run -p {conda_env_path} python -m PyPARIS.multiprocexec -n {n_cores} sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
+        launch_cmd = f"{conda_run_cmd} python -m PyPARIS.multiprocexec -n {n_cores} sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
 
     shutil.copytree(ref_sim, sim_dir)
 
@@ -63,7 +74,8 @@ for el_dens in el_densities:
     with open(job_file, "w") as f:
         f.write(job_header+"\n\n")
         # f.write(f"cd {sim_dir}\n\n")
-        f.write(module_import+"\n\n")
+        f.write(module_import+"\n")
+        f.write(activate_env+"\n")
         f.write(launch_cmd)
     
     with open(sim_submit_file, "a") as f:
