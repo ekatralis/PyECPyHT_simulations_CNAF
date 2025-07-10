@@ -61,10 +61,10 @@ conda activate {conda_env_path}
         conda_run_cmd = f"conda run -p {conda_env_path}"
     if args.multithreading_mode == "MPI":
         module_import = "module load mpi/openmpi-x86_64"
-        launch_cmd = f"mpiexec -n {n_cores} {conda_run_cmd} python -m PyPARIS.withmpi sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
+        launch_cmd = f"stdbuf -oL mpiexec -n {n_cores} {conda_run_cmd} python -m PyPARIS.withmpi sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
     elif args.multithreading_mode == "Multiproc":
         module_import = ""
-        launch_cmd = f"{conda_run_cmd} python -m PyPARIS.multiprocexec -n {n_cores} sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
+        launch_cmd = f"stdbuf -oL {conda_run_cmd} python -m PyPARIS.multiprocexec -n {n_cores} sim_class=PyPARIS_sim_class.Simulation.Simulation >> stdout.txt 2>> stderr.txt"
 
     shutil.copytree(ref_sim, sim_dir)
 
