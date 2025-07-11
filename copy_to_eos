@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# --- CONFIGURE THESE ---
+USERNAME="username"
+DEST_HOST="lxplus.cern.ch"
+EOS_USR_DIR=$(echo $USERNAME |grep -o "." | head -n 1)
+# ------------------------
+
+if  [ "$#" -eq 1 ]; then
+    LOCAL_PATH="$1"
+    rsync -avz "$LOCAL_PATH" "${USERNAME}@${DEST_HOST}:/eos/user/${EOS_USR_DIR}/${USERNAME}/"
+elif [ "$#" -eq 2 ]; then
+    LOCAL_PATH="$1"
+    REMOTE_SUBDIR="$2"
+    REMOTE_PATH="/eos/user/${EOS_USR_DIR}/${USERNAME}/${REMOTE_SUBDIR}"
+    rsync -avz \
+        --rsync-path="mkdir -p '$REMOTE_PATH' && rsync" \
+        "$LOCAL_PATH" \
+        "${USERNAME}@${DEST_HOST}:${REMOTE_PATH}"
+else
+    echo "Usage: copy_to_eos /local/path /folder/inside/cernbox or copy_to_cnaf /local/path to copy into the home cernbox directory"
+    exit 1
+fi
