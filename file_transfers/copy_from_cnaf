@@ -20,6 +20,6 @@ elif [ "$#" -eq 2 ]; then
         "${USERNAME}@${DEST_HOST}:${REMOTE_PATH}" \
         "$LOCAL_PATH"
 else
-    echo "Usage: copy_to_cnaf /folder_or_file/inside/cnaf/home /local/path or copy_to_cnaf /folder_or_file/inside/cnaf/home to copy into cwd"
+    echo "Usage: copy_from_cnaf /folder_or_file/inside/cnaf/home /local/path or copy_from_cnaf /folder_or_file/inside/cnaf/home to copy into cwd"
     exit 1
 fi
