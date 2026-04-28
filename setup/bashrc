@@ -36,3 +36,27 @@ sims() {
         fi
     fi
 }
+
+jobcd() {
+    local jobname="$1"
+
+    # Get the most recent job ID with that name
+    local jobid
+    jobid=$(squeue -u "$USER" -o "%.18i %.100j" | awk -v name="$jobname" '$2==name {print $1}' | tail -n 1)
+
+    if [ -z "$jobid" ]; then
+        echo "No running job found with name: $jobname"
+        return 1
+    fi
+
+    # Get the working directory
+    local workdir
+    workdir=$(scontrol show job "$jobid" | awk -F= '/WorkDir/ {print $2}' | head -n 1)
+
+    if [ -z "$workdir" ]; then
+        echo "Could not determine WorkDir for job $jobid"
+        return 1
+    fi
+
+    cd "$workdir" || return
+}
