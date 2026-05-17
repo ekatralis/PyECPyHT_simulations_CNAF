@@ -29,7 +29,12 @@ pl.close('all')
 
 # 1. Drift Length
 # fraction_device_dip_vect = np.arange(2,20.1,0.5)*1e-2
-el_densities = np.concatenate([np.array([1e12]),np.arange(2e12, 4.01e12,5e11),np.arange(5e12, 1.01e13,1e12)],axis = 0)
+if args.chroma == 0:
+    el_densities = np.sort(np.concatenate([np.array([3.75e+12]),np.array([1e12]),np.arange(2e12, 4.01e12,5e11),np.arange(5e12, 1.01e13,1e12)],axis = 0))
+elif args.chroma == 5:
+    el_densities = np.sort(np.concatenate([np.array([3.75e+12,4.50e+12]),np.array([1e12]),np.arange(2e12, 4.01e12,5e11),np.arange(5e12, 1.01e13,1e12)],axis = 0))
+else:
+    el_densities = np.concatenate([np.array([1e12]),np.arange(2e12, 4.01e12,5e11),np.arange(5e12, 1.01e13,1e12)],axis = 0)
 # el_densities = np.array([8.00e+12,9.00e+12])
 #~ fraction_device_dip_vect = np.arange(15,20.1,1.)*1e-2
 
@@ -63,9 +68,9 @@ figNumber = 0
 figNumber = figNumber + 1
 
 # Figure settings
-fig = pl.figure(figNumber, figsize=(14,16))
+fig = pl.figure(figNumber, figsize=(14,20))
 fig.patch.set_facecolor('w')
-gs1 = gridspec.GridSpec(4, 2)
+gs1 = gridspec.GridSpec(5, 2)
 
 sp1 = fig.add_subplot(gs1[0])
 sp2 = fig.add_subplot(gs1[1], sharex=sp1, sharey=sp1 )
@@ -73,8 +78,10 @@ sp3 = fig.add_subplot(gs1[2], sharex=sp1)
 sp4 = fig.add_subplot(gs1[3], sharex=sp1, sharey=sp3)
 sp5 = fig.add_subplot(gs1[4], sharex=sp1) 
 sp6 = fig.add_subplot(gs1[5], sharex=sp1, sharey=sp5)
-sp7 = fig.add_subplot(gs1[6], sharex=sp1)
-sp8 = fig.add_subplot(gs1[7], sharex=sp1)
+sp7 = fig.add_subplot(gs1[8], sharex=sp1)
+sp8 = fig.add_subplot(gs1[9], sharex=sp1)
+sp9 = fig.add_subplot(gs1[6], sharex=sp1)
+sp10 = fig.add_subplot(gs1[7], sharex=sp1, sharey=sp9)
 
 if args.cmap == 'magma':
     colorcurr = pl.cm.magma(np.linspace(0, 1, len(el_densities)))
@@ -188,7 +195,20 @@ for el_dens in el_densities:
                 sp5.plot(tt[mask_from_bunch], epsn_x_from_bunch_monitor[mask_from_bunch]*1e6, color = colorcurr[jj])
                 #sp4.set_ylim(2.9,3.5)
                
-                sp6.plot(tt[mask_from_bunch], epsn_y_from_bunch_monitor[mask_from_bunch]*1e6, color = colorcurr[jj]) 
+                sp6.plot(tt[mask_from_bunch], epsn_y_from_bunch_monitor[mask_from_bunch]*1e6, color = colorcurr[jj])
+
+                # d(epsn_x/y)/dt
+                dt = 1.0  # one turn; replace with physical time per turn
+
+                epsx = epsn_x_from_bunch_monitor[mask_from_bunch]
+                epsy = epsn_y_from_bunch_monitor[mask_from_bunch]
+                t    = tt[mask_from_bunch] * dt
+
+                depsx_dt = np.gradient(epsx, t)
+                depsy_dt = np.gradient(epsy, t) 
+
+                sp9.plot(t, depsx_dt * 1e6, color=colorcurr[jj])
+                sp10.plot(t, depsy_dt * 1e6, color=colorcurr[jj])
                 
                 sp7.plot(tt[mask_from_bunch], N_mp_from_bunch_monitor[mask_from_bunch], color = colorcurr[jj])
                 sp8.plot(tt[mask_from_bunch], sigma_z_from_bunch_monitor[mask_from_bunch]*4/clight*1e9, color = colorcurr[jj])
@@ -234,10 +254,12 @@ sp5.set_ylabel('Normalized emittance x [um]')
 sp6.set_ylabel('Normalized emittance y [um]')
 sp7.set_ylabel('Number of macroparticles')
 sp8.set_ylabel('Bunch length (4$\sigma$) [ns]')
+sp9.set_ylabel(r'$d\epsilon_{n,x}/dt$ [$\mu$m/turn]')
+sp10.set_ylabel(r'$d\epsilon_{n,y}/dt$ [$\mu$m/turn]')
 
 
 #sp1.set_xlim(0, 1.0)
-for sp in [sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8]:
+for sp in [sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10]:
     sp.set_xscale('symlog', linthresh=10)
     sp.set_xlim(left=0)
     # sp.ticklabel_format(useOffset=False)
